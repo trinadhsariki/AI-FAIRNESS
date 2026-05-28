@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>CleanAI — Smart Waste Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --green: #1D9E75;
+  --green-light: #e1f5ee;
+  --green-dark: #0f6e56;
+  --red: #E24B4A;
+  --red-light: #fdf0f0;
+  --amber: #BA7517;
+  --amber-light: #fef3e0;
+  --navy: #1a2332;
+  --navy-2: #243047;
+  --blue: #378ADD;
+  --blue-light: #EBF4FF;
+  --gray: #6b7280;
+  --gray-light: #f4f5f7;
+  --gray-border: #e5e7eb;
+  --white: #ffffff;
+  --text: #111827;
+  --text-muted: #6b7280;
+  --radius: 14px;
+  --radius-sm: 8px;
+  --shadow: 0 2px 16px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+  --font-head: 'Nunito', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--font-body);background:var(--gray-light);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+/* ── LANDING / LOGIN ─────────────────────────────── */
+#landing{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(160deg,#0d1b2a 0%,#1a3340 40%,#0f4d35 100%);padding:2rem;position:relative;overflow:hidden;}
+#landing::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Ccircle cx='30' cy='30' r='1' fill='%23ffffff08'/%3E%3C/svg%3E");animation:float 20s linear infinite;}
+@keyframes float{0%{transform:translateY(0)}100%{transform:translateY(-60px)}}
+.land-logo{font-family:var(--font-head);font-size:2.8rem;font-weight:900;color:#fff;letter-spacing:-1px;margin-bottom:.4rem;}
+.land-logo span{color:#1D9E75;}
+.land-sub{color:rgba(255,255,255,0.6);font-size:.95rem;margin-bottom:3rem;text-align:center;max-width:320px;}
+.land-card{background:rgba(255,255,255,0.05);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:2rem;width:100%;max-width:380px;}
+.land-card h2{font-family:var(--font-head);color:#fff;font-size:1.3rem;font-weight:700;margin-bottom:1.5rem;}
+.role-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.5rem;}
+.role-btn{display:flex;flex-direction:column;align-items:center;gap:6px;padding:1.2rem .8rem;background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.12);border-radius:14px;cursor:pointer;transition:all .2s;color:#fff;font-family:var(--font-body);}
+.role-btn:hover,.role-btn.selected{background:rgba(29,158,117,0.25);border-color:#1D9E75;}
+.role-btn .role-icon{font-size:2rem;}
+.role-btn .role-label{font-size:.85rem;font-weight:500;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:.85rem 1.5rem;border-radius:12px;font-family:var(--font-body);font-size:.95rem;font-weight:600;border:none;cursor:pointer;transition:all .18s;text-decoration:none;width:100%;}
+.btn-primary{background:var(--green);color:#fff;}
+.btn-primary:hover{background:var(--green-dark);transform:translateY(-1px);box-shadow:0 4px 20px rgba(29,158,117,0.4);}
+.btn-secondary{background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);}
+.btn-secondary:hover{background:rgba(255,255,255,0.18);}
+.btn-danger{background:var(--red);color:#fff;}
+.btn-danger:hover{background:#c73d3c;}
+.btn-amber{background:var(--amber);color:#fff;}
+.btn-outline{background:transparent;color:var(--green);border:1.5px solid var(--green);}
+.btn-outline:hover{background:var(--green-light);}
+.btn-sm{padding:.5rem 1rem;font-size:.85rem;border-radius:8px;}
+.btn-xs{padding:.35rem .8rem;font-size:.78rem;border-radius:6px;}
+
+/* ── APP SHELL ───────────────────────────────────── */
+#app{display:none;height:100vh;flex-direction:column;max-width:430px;margin:0 auto;background:#fff;position:relative;box-shadow:var(--shadow-lg);}
+.screen{display:none;flex:1;overflow-y:auto;padding-bottom:80px;}
+.screen.active{display:block;}
+
+/* ── TOP BAR ─────────────────────────────────────── */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.2rem .8rem;background:#fff;border-bottom:1px solid var(--gray-border);position:sticky;top:0;z-index:100;}
+.topbar-logo{font-family:var(--font-head);font-weight:900;font-size:1.3rem;color:var(--navy);letter-spacing:-.5px;}
+.topbar-logo span{color:var(--green);}
+.notif-bell{position:relative;padding:.4rem;cursor:pointer;}
+.notif-badge{position:absolute;top:2px;right:2px;background:var(--red);color:#fff;font-size:.6rem;font-weight:700;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;}
+.back-btn{font-size:1.3rem;cursor:pointer;color:var(--text);padding:.3rem;}
+
+/* ── BOTTOM NAV ──────────────────────────────────── */
+.bottom-nav{display:flex;border-top:1px solid var(--gray-border);background:#fff;position:sticky;bottom:0;z-index:100;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:.7rem .3rem .5rem;cursor:pointer;transition:all .15s;color:var(--text-muted);}
+.nav-item.active{color:var(--green);}
+.nav-item .nav-icon{font-size:1.35rem;}
+.nav-item .nav-label{font-size:.65rem;font-weight:600;}
+.nav-item.report-btn{flex:0 0 72px;position:relative;top:-18px;}
+.report-fab{width:56px;height:56px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.6rem;color:#fff;box-shadow:0 4px 20px rgba(29,158,117,0.5);transition:transform .2s;}
+.report-fab:hover,.report-fab:active{transform:scale(1.08);}
+
+/* ── SECTION HEADERS ─────────────────────────────── */
+.section-header{padding:1.2rem 1.2rem .6rem;display:flex;align-items:center;justify-content:space-between;}
+.section-header h2{font-family:var(--font-head);font-size:1.25rem;font-weight:800;color:var(--navy);}
+.section-header p{font-size:.82rem;color:var(--text-muted);margin-top:2px;}
+
+/* ── CARDS ───────────────────────────────────────── */
+.card{background:#fff;border-radius:var(--radius);border:1px solid var(--gray-border);padding:1.1rem;margin:0 1rem .9rem;}
+.card-sm{padding:.8rem;margin:0 1rem .6rem;border-radius:var(--radius-sm);}
+
+/* ── STAT TILES ──────────────────────────────────── */
+.stats-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 1rem .8rem;}
+.stat-tile{background:var(--gray-light);border-radius:12px;padding:.9rem 1rem;}
+.stat-tile .val{font-family:var(--font-head);font-size:1.8rem;font-weight:800;color:var(--navy);}
+.stat-tile .lbl{font-size:.72rem;color:var(--text-muted);font-weight:500;margin-top:2px;}
+
+/* ── MAP MOCK ────────────────────────────────────── */
+.map-container{position:relative;background:linear-gradient(135deg,#dce8f0 0%,#c8dde8 50%,#d4e8d0 100%);height:280px;overflow:hidden;margin:0 1rem;border-radius:var(--radius);border:1px solid var(--gray-border);}
+.map-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(0,0,0,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.04) 1px,transparent 1px);background-size:40px 40px;}
+.map-road-h{position:absolute;height:3px;background:rgba(255,255,255,0.7);border-radius:2px;}
+.map-road-v{position:absolute;width:3px;background:rgba(255,255,255,0.7);border-radius:2px;}
+.map-pin{position:absolute;transform:translate(-50%,-100%);cursor:pointer;transition:transform .2s;}
+.map-pin:hover{transform:translate(-50%,-100%) scale(1.2);}
+.pin-dot{width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.25);}
+.pin-dot span{transform:rotate(45deg);font-size:.85rem;}
+.pin-critical .pin-dot{background:var(--red);}
+.pin-high .pin-dot{background:#f97316;}
+.pin-medium .pin-dot{background:var(--amber);}
+.pin-low .pin-dot{background:var(--blue);}
+.pin-resolved .pin-dot{background:var(--green);}
+.map-you{position:absolute;transform:translate(-50%,-50%);}
+.you-dot{width:18px;height:18px;background:var(--blue);border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 6px rgba(55,138,221,.25);}
+.map-legend{position:absolute;bottom:8px;right:8px;background:rgba(255,255,255,0.9);backdrop-filter:blur(4px);border-radius:8px;padding:6px 10px;font-size:.68rem;}
+.legend-item{display:flex;align-items:center;gap:4px;margin-bottom:2px;}
+.legend-dot{width:8px;height:8px;border-radius:50%;}
+.map-popup{position:absolute;background:#fff;border-radius:12px;padding:.8rem;box-shadow:var(--shadow-lg);width:180px;font-size:.8rem;transform:translate(-50%,-110%);z-index:10;display:none;}
+.map-popup.show{display:block;}
+
+/* ── REPORT CARD ─────────────────────────────────── */
+.report-card{background:#fff;border-radius:var(--radius);border:1px solid var(--gray-border);padding:1rem;margin:0 1rem .75rem;cursor:pointer;transition:all .15s;}
+.report-card:hover{border-color:var(--green);box-shadow:0 2px 12px rgba(29,158,117,.12);}
+.report-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.6rem;}
+.report-card-title{font-family:var(--font-head);font-weight:700;font-size:.95rem;color:var(--navy);}
+.report-card-addr{font-size:.78rem;color:var(--text-muted);margin-top:2px;}
+.report-card-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:.6rem;}
+.waste-bar-wrap{margin-top:.7rem;}
+.waste-bar-label{display:flex;justify-content:space-between;font-size:.75rem;color:var(--text-muted);margin-bottom:4px;}
+.waste-bar{height:6px;background:var(--gray-light);border-radius:3px;overflow:hidden;}
+.waste-bar-fill{height:100%;border-radius:3px;transition:width 1s ease;}
+
+/* ── BADGES ──────────────────────────────────────── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:.72rem;font-weight:600;}
+.badge-critical{background:#fdf0f0;color:var(--red);}
+.badge-high{background:#fff4ed;color:#ea580c;}
+.badge-medium{background:var(--amber-light);color:var(--amber);}
+.badge-low{background:var(--blue-light);color:var(--blue);}
+.badge-resolved{background:var(--green-light);color:var(--green-dark);}
+.badge-pending{background:#f5f3ff;color:#7c3aed;}
+.badge-in_progress{background:#fef9c3;color:#a16207;}
+.badge-acknowledged{background:#eff6ff;color:#1d4ed8;}
+.badge-plastic{background:#dbeafe;color:#1e40af;}
+.badge-organic{background:var(--green-light);color:var(--green-dark);}
+.badge-hazardous{background:#fdf4ff;color:#7e22ce;}
+.badge-mixed{background:#f1f5f9;color:#475569;}
+.badge-construction{background:#fff7ed;color:#9a3412;}
+
+/* ── REPORT FORM ─────────────────────────────────── */
+.form-group{margin-bottom:1.1rem;}
+.form-label{font-size:.82rem;font-weight:600;color:var(--navy);margin-bottom:.4rem;display:block;}
+.form-input,.form-textarea,.form-select{width:100%;padding:.8rem 1rem;border:1.5px solid var(--gray-border);border-radius:10px;font-family:var(--font-body);font-size:.9rem;color:var(--text);background:#fff;transition:border-color .15s;}
+.form-input:focus,.form-textarea:focus,.form-select:focus{outline:none;border-color:var(--green);}
+.form-textarea{resize:vertical;min-height:80px;}
+.upload-zone{border:2px dashed var(--gray-border);border-radius:14px;padding:2rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--gray-light);}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--green);background:var(--green-light);}
+.upload-zone input[type=file]{display:none;}
+.upload-icon{font-size:2.5rem;margin-bottom:.5rem;}
+.upload-preview{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:.8rem;}
+.preview-img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:2px solid var(--gray-border);}
+
+/* ── AI RESULT ───────────────────────────────────── */
+.ai-result{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 100%);border-radius:var(--radius);padding:1.2rem;color:#fff;margin:0 0 1rem;}
+.ai-result-title{font-family:var(--font-head);font-size:1rem;font-weight:800;margin-bottom:1rem;display:flex;align-items:center;gap:6px;}
+.ai-meter{margin:1rem 0;}
+.ai-meter-label{display:flex;justify-content:space-between;font-size:.8rem;opacity:.7;margin-bottom:6px;}
+.ai-meter-bar{height:10px;background:rgba(255,255,255,.15);border-radius:5px;overflow:hidden;}
+.ai-meter-fill{height:100%;border-radius:5px;transition:width 1.2s ease;}
+.ai-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top.8rem;}
+.ai-item{background:rgba(255,255,255,.08);border-radius:10px;padding:.6rem .8rem;}
+.ai-item-label{font-size:.68rem;opacity:.6;margin-bottom:3px;}
+.ai-item-val{font-family:var(--font-head);font-weight:700;font-size.95rem;}
+
+/* ── NOTIFICATION ITEM ───────────────────────────── */
+.notif-item{display:flex;gap:.8rem;padding:.9rem 1rem;border-bottom:1px solid var(--gray-border);cursor:pointer;transition:background .15s;}
+.notif-item:hover{background:var(--gray-light);}
+.notif-item.unread{background:#f0faf6;}
+.notif-item .notif-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+.notif-item .notif-body{flex:1;}
+.notif-item .notif-title{font-weight:600;font-size:.9rem;color:var(--navy);}
+.notif-item .notif-text{font-size:.8rem;color:var(--text-muted);margin-top:2px;line-height:1.4;}
+.notif-item .notif-time{font-size:.7rem;color:var(--text-muted);margin-top:4px;}
+
+/* ── AWARENESS FEED ──────────────────────────────── */
+.reel-card{background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);height:240px;border-radius:var(--radius);margin:0 1rem .8rem;position:relative;overflow:hidden;cursor:pointer;}
+.reel-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.8) 0%,transparent 50%);}
+.reel-content{position:absolute;bottom:0;left:0;right:0;padding:1rem;}
+.reel-tag{background:var(--green);color:#fff;font-size:.68rem;font-weight:700;padding:3px 8px;border-radius:4px;display:inline-block;margin-bottom:.4rem;}
+.reel-title{color:#fff;font-family:var(--font-head);font-weight:700;font-size:1rem;}
+.reel-actions{position:absolute;right:10px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:14px;}
+.reel-action{display:flex;flex-direction:column;align-items:center;gap:3px;color:#fff;font-size:.65rem;}
+.reel-action span:first-child{font-size:1.4rem;}
+.reel-emoji{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:4rem;opacity:.15;}
+
+/* ── PROGRESS STEPS ──────────────────────────────── */
+.steps{padding:0 1rem;}
+.step{display:flex;gap:.8rem;padding-bottom:1.2rem;position:relative;}
+.step:not(:last-child)::before{content:'';position:absolute;left:15px;top:32px;bottom:0;width:2px;background:var(--gray-border);}
+.step.done:not(:last-child)::before{background:var(--green);}
+.step-dot{width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.9rem;border:2px solid var(--gray-border);}
+.step.done .step-dot{background:var(--green);border-color:var(--green);color:#fff;}
+.step.active .step-dot{border-color:var(--green);color:var(--green);}
+.step-info{padding-top:4px;}
+.step-name{font-weight:600;font-size:.9rem;color:var(--navy);}
+.step-time{font-size:.75rem;color:var(--text-muted);}
+
+/* ── AUTHORITY DASHBOARD ─────────────────────────── */
+#auth-app{display:none;min-height:100vh;background:var(--navy);flex-direction:column;}
+.auth-topbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.1);}
+.auth-logo{font-family:var(--font-head);font-weight:900;font-size:1.2rem;color:#fff;letter-spacing:-.5px;}
+.auth-logo span{color:var(--green);}
+.auth-nav{display:flex;gap:.3rem;padding:.8rem 1.2rem;border-bottom:1px solid rgba(255,255,255,.1);overflow-x:auto;}
+.auth-nav::-webkit-scrollbar{display:none;}
+.auth-nav-item{padding:.5rem 1rem;border-radius:8px;color:rgba(255,255,255,.6);font-size:.85rem;font-weight:500;cursor:pointer;white-space:nowrap;transition:all .15s;}
+.auth-nav-item.active{background:rgba(29,158,117,.25);color:var(--green);}
+.auth-screen{display:none;padding:1.2rem;flex:1;overflow-y:auto;}
+.auth-screen.active{display:block;}
+.auth-stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:1.2rem;}
+.auth-stat{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:1rem;}
+.auth-stat .aval{font-family:var(--font-head);font-size:2rem;font-weight:800;color:#fff;}
+.auth-stat .albl{font-size:.75rem;color:rgba(255,255,255,.5);margin-top:3px;}
+.auth-stat .atrend{font-size:.72rem;margin-top:.4rem;}
+.auth-report-row{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:.9rem 1rem;margin-bottom:.6rem;cursor:pointer;transition:all .15s;}
+.auth-report-row:hover{background:rgba(255,255,255,.09);border-color:rgba(29,158,117,.4);}
+.auth-report-row .rr-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;}
+.auth-report-row .rr-title{color:#fff;font-weight:600;font-size:.9rem;}
+.auth-report-row .rr-addr{color:rgba(255,255,255,.5);font-size:.78rem;margin-top:2px;}
+.auth-chart-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:1rem;margin-bottom:1rem;}
+.auth-chart-title{color:rgba(255,255,255,.7);font-size:.82rem;font-weight:600;margin-bottom:1rem;}
+.filter-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:.3rem;margin-bottom:1rem;}
+.filter-row::-webkit-scrollbar{display:none;}
+.filter-chip{padding:.4rem .9rem;border-radius:20px;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.6);font-size:.78rem;cursor:pointer;white-space:nowrap;transition:all .15s;}
+.filter-chip.active{background:var(--green);color:#fff;border-color:var(--green);}
+
+/* ── MODAL ───────────────────────────────────────── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:none;align-items:flex-end;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal{background:#fff;border-radius:24px 24px 0 0;width:100%;max-width:430px;max-height:85vh;overflow-y:auto;padding:1.5rem;}
+.modal-handle{width:40px;height:4px;background:var(--gray-border);border-radius:2px;margin:0 auto 1.2rem;}
+.modal-title{font-family:var(--font-head);font-weight:800;font-size:1.2rem;color:var(--navy);margin-bottom:1rem;}
+.auth-modal{background:var(--navy-2);color:#fff;}
+.auth-modal .modal-title{color:#fff;}
+
+/* ── PROFILE ─────────────────────────────────────── */
+.profile-hero{background:linear-gradient(135deg,var(--navy),var(--navy-2));padding:2rem 1.5rem 3rem;text-align:center;}
+.profile-avatar{width:72px;height:72px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:1.8rem;font-family:var(--font-head);font-weight:800;color:#fff;margin:0 auto 1rem;border:3px solid rgba(255,255,255,.3);}
+.profile-name{font-family:var(--font-head);font-size:1.3rem;font-weight:800;color:#fff;}
+.profile-city{font-size:.85rem;color:rgba(255,255,255,.6);margin-top:3px;}
+.profile-points{display:inline-flex;align-items:center;gap:6px;background:rgba(29,158,117,.3);border-radius:20px;padding:.3rem .9rem;margin-top:.8rem;color:#fff;font-size:.85rem;font-weight:600;}
+.profile-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--gray-border);margin:-1.5rem 1rem 0;border-radius:14px;overflow:hidden;background:#fff;}
+.profile-stat{text-align:center;padding:1rem .5rem;background:#fff;}
+.profile-stat .pval{font-family:var(--font-head);font-size:1.4rem;font-weight:800;color:var(--navy);}
+.profile-stat .plbl{font-size:.7rem;color:var(--text-muted);margin-top:2px;}
+
+/* ── TOAST ───────────────────────────────────────── */
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:.7rem 1.5rem;border-radius:24px;font-size:.85rem;font-weight:500;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;}
+.loading-spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.skeleton{background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:8px;}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.empty-state{text-align:center;padding:3rem 1.5rem;color:var(--text-muted);}
+.empty-state .empty-icon{font-size:3rem;margin-bottom.8rem;}
+.empty-state p{font-size:.9rem;line-height:1.5;}
+.divider{height:1px;background:var(--gray-border);margin:.5rem 0;}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--gray-light);border-radius:20px;font-size:.75rem;color:var(--text-muted);}
+.green-hero{background:linear-gradient(135deg,#0d4f35,#1a7050);border-radius:var(--radius);padding:1.2rem;margin:0 1rem .8rem;color:#fff;}
+.green-hero h3{font-family:var(--font-head);font-weight:800;font-size:1rem;margin-bottom:.6rem;}
+.hero-list{display:flex;flex-direction:column;gap:.5rem;}
+.hero-row{display:flex;align-items:center;gap:.8rem;}
+.hero-avatar{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-weight:700;font-size:.85rem;color:#fff;}
+.hero-name{font-size:.85rem;font-weight:600;color:#fff;}
+.hero-pts{margin-left:auto;font-size:.78rem;color:rgba(255,255,255,.7);}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════ LANDING ══════════════════ -->
+<div id="landing">
+  <div style="text-align:center;margin-bottom:2.5rem;position:relative;z-index:1;">
+    <div style="font-size:3.5rem;margin-bottom:.5rem;">🌿</div>
+    <div class="land-logo">Clean<span>AI</span></div>
+    <div class="land-sub">AI-powered civic waste management — report, track, resolve, and spread awareness</div>
+  </div>
+  <div class="land-card" style="position:relative;z-index:1;">
+    <h2>Choose your portal</h2>
+    <div class="role-btns">
+      <div class="role-btn selected" id="role-citizen" onclick="selectRole('citizen')">
+        <span class="role-icon">👥</span>
+        <span class="role-label">Citizen</span>
+      </div>
+      <div class="role-btn" id="role-authority" onclick="selectRole('authority')">
+        <span class="role-icon">🏛️</span>
+        <span class="role-label">Authority</span>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="demoLogin()" id="login-btn">
+      <span>Enter as Demo User</span>
+      <span>→</span>
+    </button>
+    <div style="text-align:center;margin-top:.8rem;">
+      <span style="color:rgba(255,255,255,.4);font-size:.78rem;">Authority: authority@bmc.gov.in / admin123</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ CITIZEN APP ══════════════════ -->
+<div id="app" style="display:none;flex-direction:column;">
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="topbar-logo">Clean<span>AI</span></div>
+    <div style="display:flex;align-items:center;gap:.5rem;">
+      <div class="chip" id="user-city-chip">📍 Mumbai</div>
+      <div class="notif-bell" onclick="showScreen('notifications')">
+        🔔
+        <div class="notif-badge" id="notif-count" style="display:none;">0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── HOME SCREEN ── -->
+  <div id="screen-home" class="screen active">
+    <div class="section-header" style="padding-top:.8rem;">
+      <div>
+        <h2>Waste Reports Map</h2>
+        <p id="home-greeting">Good day! Help keep your city clean</p>
+      </div>
+      <div style="font-size:1.5rem;">🗺️</div>
+    </div>
+
+    <!-- Map -->
+    <div class="map-container" id="main-map">
+      <div class="map-grid"></div>
+      <div class="map-road-h" style="top:40%;left:0;right:0;"></div>
+      <div class="map-road-h" style="top:65%;left:0;right:0;"></div>
+      <div class="map-road-v" style="left:30%;top:0;bottom:0;"></div>
+      <div class="map-road-v" style="left:70%;top:0;bottom:0;"></div>
+      <!-- Pins rendered by JS -->
+      <div class="map-you" style="left:50%;top:48%;">
+        <div class="you-dot"></div>
+      </div>
+      <div class="map-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Critical</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>Medium</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Resolved</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>You</div>
+      </div>
+      <div class="map-popup" id="map-popup">
+        <div id="popup-content"></div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row" style="margin-top:.8rem;">
+      <div class="stat-tile">
+        <div class="val" id="stat-total">—</div>
+        <div class="lbl">Total Reports</div>
+      </div>
+      <div class="stat-tile">
+        <div class="val" id="stat-critical" style="color:var(--red);">—</div>
+        <div class="lbl">Critical</div>
+      </div>
+      <div class="stat-tile">
+        <div class="val" id="stat-resolved" style="color:var(--green);">—</div>
+        <div class="lbl">Resolved</div>
+      </div>
+      <div class="stat-tile">
+        <div class="val" id="stat-pending" style="color:var(--amber);">—</div>
+        <div class="lbl">Pending</div>
+      </div>
+    </div>
+
+    <!-- Recent Reports -->
+    <div class="section-header">
+      <h2>Recent Reports</h2>
+      <span style="font-size:.8rem;color:var(--green);cursor:pointer;" onclick="showScreen('my-reports')">See all →</span>
+    </div>
+    <div id="home-reports-list"></div>
+  </div>
+
+  <!-- ── REPORT SCREEN ── -->
+  <div id="screen-report" class="screen">
+    <div class="section-header">
+      <div><h2>Report Waste</h2><p>Upload photo or video for AI analysis</p></div>
+      <div style="font-size:1.5rem;">📸</div>
+    </div>
+    <div style="padding:0 1rem;">
+      <div class="form-group">
+        <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()" ondrop="handleDrop(event)" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')">
+          <input type="file" id="file-input" accept="image/*,video/*" multiple onchange="handleFileSelect(event)">
+          <div class="upload-icon">📷</div>
+          <div style="font-weight:600;color:var(--navy);margin-bottom:4px;">Upload Photo / Video</div>
+          <div style="font-size:.8rem;color:var(--text-muted);">or drag & drop here • Max 50MB</div>
+          <button class="btn btn-outline btn-sm" style="margin-top:.8rem;width:auto;" onclick="openCamera(event)">📱 Use Camera</button>
+        </div>
+        <div class="upload-preview" id="upload-preview"></div>
+      </div>
+
+      <!-- AI Result (shown after upload) -->
+      <div id="ai-result-block" style="display:none;">
+        <div class="ai-result">
+          <div class="ai-result-title">🤖 AI Analysis Complete</div>
+          <div class="ai-meter">
+            <div class="ai-meter-label">
+              <span>Waste Coverage</span>
+              <span id="ai-pct-text">0%</span>
+            </div>
+            <div class="ai-meter-bar">
+              <div class="ai-meter-fill" id="ai-pct-fill" style="width:0%;background:var(--red);"></div>
+            </div>
+          </div>
+          <div class="ai-grid">
+            <div class="ai-item"><div class="ai-item-label">Waste Type</div><div class="ai-item-val" id="ai-type">—</div></div>
+            <div class="ai-item"><div class="ai-item-label">Severity</div><div class="ai-item-val" id="ai-severity">—</div></div>
+            <div class="ai-item"><div class="ai-item-label">Confidence</div><div class="ai-item-val" id="ai-conf">—</div></div>
+            <div class="ai-item"><div class="ai-item-label">Action</div><div class="ai-item-val" id="ai-action">—</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">📍 Location</label>
+        <div style="display:flex;gap:8px;">
+          <input type="text" class="form-input" id="location-input" placeholder="Detecting your location..." style="flex:1;" readonly>
+          <button class="btn btn-outline btn-sm" style="width:auto;" onclick="detectLocation()">🎯 GPS</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">📝 Description (optional)</label>
+        <textarea class="form-textarea" id="desc-input" placeholder="Describe the waste situation, any additional details..."></textarea>
+      </div>
+
+      <button class="btn btn-primary" id="submit-btn" onclick="submitReport()" style="margin-bottom:1rem;">
+        <span>Submit Report</span>
+        <span>🚀</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── MY REPORTS ── -->
+  <div id="screen-my-reports" class="screen">
+    <div class="section-header">
+      <div><h2>My Reports</h2><p>Track your submissions</p></div>
+      <div style="font-size:1.5rem;">📋</div>
+    </div>
+    <div id="my-reports-list"></div>
+  </div>
+
+  <!-- ── AWARENESS ── -->
+  <div id="screen-awareness" class="screen">
+    <div class="section-header">
+      <div><h2>Awareness Hub</h2><p>Learn & share for a cleaner city</p></div>
+      <div style="font-size:1.5rem;">🎬</div>
+    </div>
+
+    <!-- Green Hero -->
+    <div class="green-hero">
+      <h3>🏆 This Week's Green Heroes</h3>
+      <div class="hero-list" id="hero-list"></div>
+    </div>
+
+    <!-- Reels -->
+    <div id="reels-feed"></div>
+    <div style="padding:0 1rem 1rem;">
+      <button class="btn btn-outline" onclick="showToast('Feature coming soon — upload your cleanup reel!')">📹 Upload Your Reel</button>
+    </div>
+  </div>
+
+  <!-- ── NOTIFICATIONS ── -->
+  <div id="screen-notifications" class="screen">
+    <div class="section-header">
+      <div><h2>Notifications</h2></div>
+      <span style="font-size:.8rem;color:var(--green);cursor:pointer;" onclick="markAllRead()">Mark all read</span>
+    </div>
+    <div id="notif-list"></div>
+  </div>
+
+  <!-- ── PROFILE ── -->
+  <div id="screen-profile" class="screen">
+    <div class="profile-hero">
+      <div class="profile-avatar" id="profile-avatar">R</div>
+      <div class="profile-name" id="profile-name">Loading...</div>
+      <div class="profile-city" id="profile-city">📍 Mumbai</div>
+      <div class="profile-points">⭐ <span id="profile-points">0</span> points</div>
+    </div>
+    <div class="profile-stats" style="margin-top:1.5rem;">
+      <div class="profile-stat"><div class="pval" id="ps-total">0</div><div class="plbl">Reports</div></div>
+      <div class="profile-stat"><div class="pval" id="ps-resolved">0</div><div class="plbl">Resolved</div></div>
+      <div class="profile-stat"><div class="pval" id="ps-points">0</div><div class="plbl">Points</div></div>
+    </div>
+    <div style="padding:1.5rem 1rem 0;">
+      <div class="section-header" style="padding:0 0 .8rem;"><h2>Leaderboard</h2></div>
+      <div id="leaderboard-list"></div>
+      <div style="margin-top:1.5rem;">
+        <button class="btn btn-danger btn-sm" style="width:auto;" onclick="logout()">🚪 Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="showScreen('home')" id="nav-home">
+      <span class="nav-icon">🗺️</span>
+      <span class="nav-label">Home</span>
+    </div>
+    <div class="nav-item" onclick="showScreen('my-reports')" id="nav-my-reports">
+      <span class="nav-icon">📋</span>
+      <span class="nav-label">Reports</span>
+    </div>
+    <div class="nav-item report-btn" onclick="showScreen('report')" id="nav-report">
+      <div class="report-fab">➕</div>
+    </div>
+    <div class="nav-item" onclick="showScreen('awareness')" id="nav-awareness">
+      <span class="nav-icon">🎬</span>
+      <span class="nav-label">Awareness</span>
+    </div>
+    <div class="nav-item" onclick="showScreen('profile')" id="nav-profile">
+      <span class="nav-icon">👤</span>
+      <span class="nav-label">Profile</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ AUTHORITY APP ══════════════════ -->
+<div id="auth-app" style="flex-direction:column;">
+  <div class="auth-topbar">
+    <div class="auth-logo">Clean<span>AI</span> <span style="font-size:.72rem;opacity:.5;font-weight:400;margin-left:4px;">Authority Portal</span></div>
+    <div style="display:flex;align-items:center;gap:.8rem;">
+      <div style="color:rgba(255,255,255,.6);font-size:.78rem;" id="auth-user-name">Authority</div>
+      <button class="btn btn-secondary btn-xs" onclick="logout()">Logout</button>
+    </div>
+  </div>
+  <div class="auth-nav">
+    <div class="auth-nav-item active" onclick="showAuthScreen('dashboard')">📊 Dashboard</div>
+    <div class="auth-nav-item" onclick="showAuthScreen('reports')">📋 Reports</div>
+    <div class="auth-nav-item" onclick="showAuthScreen('map')">🗺️ Live Map</div>
+    <div class="auth-nav-item" onclick="showAuthScreen('analytics')">📈 Analytics</div>
+    <div class="auth-nav-item" onclick="showAuthScreen('broadcast')">📢 Broadcast</div>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding-bottom:1rem;">
+
+    <!-- Dashboard -->
+    <div id="auth-screen-dashboard" class="auth-screen active">
+      <div style="color:rgba(255,255,255,.4);font-size:.8rem;margin-bottom:1rem;">Overview — All Zones</div>
+      <div class="auth-stat-grid">
+        <div class="auth-stat"><div class="aval" id="a-total">—</div><div class="albl">Total Reports</div></div>
+        <div class="auth-stat"><div class="aval" style="color:#f87171;" id="a-critical">—</div><div class="albl">Critical</div></div>
+        <div class="auth-stat"><div class="aval" style="color:#34d399;" id="a-resolved">—</div><div class="albl">Resolved</div></div>
+        <div class="auth-stat"><div class="aval" style="color:#fbbf24;" id="a-avg">—h</div><div class="albl">Avg Resolution</div></div>
+      </div>
+      <div class="auth-chart-card">
+        <div class="auth-chart-title">Reports last 7 days</div>
+        <canvas id="trend-chart" height="120"></canvas>
+      </div>
+      <div style="color:rgba(255,255,255,.6);font-size:.85rem;font-weight:600;margin-bottom:.6rem;">Recent Critical Reports</div>
+      <div id="auth-recent-list"></div>
+    </div>
+
+    <!-- Reports List -->
+    <div id="auth-screen-reports" class="auth-screen">
+      <div class="filter-row" id="auth-filters">
+        <div class="filter-chip active" onclick="filterReports('all',this)">All</div>
+        <div class="filter-chip" onclick="filterReports('pending',this)">Pending</div>
+        <div class="filter-chip" onclick="filterReports('in_progress',this)">In Progress</div>
+        <div class="filter-chip" onclick="filterReports('critical',this)">Critical</div>
+        <div class="filter-chip" onclick="filterReports('resolved',this)">Resolved</div>
+      </div>
+      <div id="auth-reports-list"></div>
+    </div>
+
+    <!-- Map -->
+    <div id="auth-screen-map" class="auth-screen">
+      <div class="map-container" id="auth-map" style="height:340px;border-radius:14px;margin:0 0 1rem;">
+        <div class="map-grid"></div>
+        <div class="map-road-h" style="top:40%;left:0;right:0;"></div>
+        <div class="map-road-h" style="top:65%;left:0;right:0;"></div>
+        <div class="map-road-v" style="left:30%;top:0;bottom:0;"></div>
+        <div class="map-road-v" style="left:70%;top:0;bottom:0;"></div>
+        <div class="map-legend"><div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Critical</div><div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>High</div><div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Resolved</div></div>
+      </div>
+      <div style="color:rgba(255,255,255,.7);font-size:.85rem;font-weight:600;margin-bottom:.6rem;">All Active Reports</div>
+      <div id="auth-map-list"></div>
+    </div>
+
+    <!-- Analytics -->
+    <div id="auth-screen-analytics" class="auth-screen">
+      <div class="auth-chart-card">
+        <div class="auth-chart-title">Reports by Waste Type</div>
+        <canvas id="type-chart" height="160"></canvas>
+      </div>
+      <div class="auth-chart-card">
+        <div class="auth-chart-title">Status Distribution</div>
+        <canvas id="status-chart" height="160"></canvas>
+      </div>
+      <div class="auth-chart-card">
+        <div class="auth-chart-title">Severity Breakdown</div>
+        <canvas id="severity-chart" height="160"></canvas>
+      </div>
+    </div>
+
+    <!-- Broadcast -->
+    <div id="auth-screen-broadcast" class="auth-screen">
+      <div class="auth-chart-card">
+        <div class="auth-chart-title" style="font-size:1rem;color:#fff;margin-bottom:1.2rem;">📢 Send Broadcast Notification</div>
+        <div class="form-group">
+          <label class="form-label" style="color:rgba(255,255,255,.7);">Title</label>
+          <input type="text" class="form-input" id="bc-title" placeholder="e.g. Zone 3 Cleanup Drive" style="background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.15);color:#fff;">
+        </div>
+        <div class="form-group">
+          <label class="form-label" style="color:rgba(255,255,255,.7);">Message</label>
+          <textarea class="form-textarea" id="bc-body" rows="4" placeholder="Type your message to all citizens..." style="background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.15);color:#fff;"></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="sendBroadcast()">📤 Send to All Citizens</button>
+      </div>
+      <div id="bc-result"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ REPORT DETAIL MODAL ══ -->
+<div class="modal-overlay" id="report-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════
+const API = 'http://localhost:3001/api';
+let TOKEN = localStorage.getItem('cleanai_token');
+let CURRENT_USER = JSON.parse(localStorage.getItem('cleanai_user') || 'null');
+let ALL_REPORTS = [];
+let SELECTED_ROLE = 'citizen';
+let GPS_COORDS = { lat: 19.0760, lng: 72.8777 };
+let SELECTED_FILES = [];
+let AI_RESULT = null;
+let TREND_CHART, TYPE_CHART, STATUS_CHART, SEVERITY_CHART;
+
+// ═══════════════════════════════════════════════════
+// API HELPERS
+// ═══════════════════════════════════════════════════
+async function api(method, path, body, isForm = false) {
+  const opts = {
+    method,
+    headers: { ...(TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {}) }
+  };
+  if (body && !isForm) {
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(body);
+  } else if (body && isForm) {
+    opts.body = body;
+  }
+  try {
+    const r = await fetch(API + path, opts);
+    const json = await r.json();
+    if (!r.ok) throw new Error(json.error || 'Request failed');
+    return json;
+  } catch (e) {
+    // If backend not running, return mock data
+    return getMockData(method, path, body);
+  }
+}
+
+// ─── MOCK DATA (works without backend) ───────────
+function getMockData(method, path, body) {
+  if (path.includes('/auth/demo-login')) return mockDemoLogin(body?.role);
+  if (path.includes('/reports/map/pins')) return { pins: MOCK_PINS };
+  if (path.includes('/reports/analytics/summary')) return MOCK_ANALYTICS;
+  if (path.includes('/reports') && method === 'GET') return { reports: MOCK_REPORTS, total: MOCK_REPORTS.length };
+  if (path.includes('/reports') && method === 'POST') return mockSubmitReport(body);
+  if (path.includes('/notifications')) return { notifications: MOCK_NOTIFS, unread_count: 2 };
+  if (path.includes('/users/profile')) return { user: CURRENT_USER || MOCK_USER };
+  if (path.includes('/users/leaderboard')) return { leaderboard: MOCK_LEADERBOARD };
+  if (method === 'PATCH') return { message: 'Updated successfully' };
+  if (path.includes('/seed-demo')) return { message: 'Demo data loaded' };
+  return {};
+}
+
+function mockDemoLogin(role) {
+  const r = role || 'citizen';
+  const user = r === 'authority'
+    ? { id: 'auth-1', name: 'Municipal Officer', role: 'authority', city: 'Mumbai', email: 'authority@bmc.gov.in' }
+    : { id: 'cit-1', name: 'Rahul Sharma', role: 'citizen', city: 'Mumbai', phone: '9876543210', points: 150 };
+  return { token: 'demo_token_' + r, user };
+}
+
+function mockSubmitReport() {
+  const ai = simulateAI();
+  return { report: { id: 'r' + Date.now(), status: 'pending', created_at: new Date().toISOString(), address: GPS_ADDR }, ai_analysis: ai, message: 'Report submitted!' };
+}
+
+function simulateAI() {
+  const types = ['organic', 'plastic', 'mixed', 'hazardous'];
+  const pct = Math.floor(Math.random() * 80) + 15;
+  const type = types[Math.floor(Math.random() * types.length)];
+  let sev = 'low';
+  if (pct >= 75) sev = 'critical';
+  else if (pct >= 50) sev = 'high';
+  else if (pct >= 25) sev = 'medium';
+  const conf = 70 + Math.floor(Math.random() * 25);
+  return { waste_type: type, waste_percentage: pct, confidence_score: conf, severity: sev };
+}
+
+// ─── MOCK DATA SETS ───────────────────────────────
+const MOCK_PINS = [
+  { id:'1', gps_lat:19.076, gps_lng:72.872, severity:'critical', status:'pending', waste_type:'plastic', address:'Dadar Station Rd' },
+  { id:'2', gps_lat:19.082, gps_lng:72.889, severity:'high', status:'in_progress', waste_type:'mixed', address:'Bandra Reclamation' },
+  { id:'3', gps_lat:19.059, gps_lng:72.829, severity:'medium', status:'acknowledged', waste_type:'organic', address:'Dharavi Cross Rd' },
+  { id:'4', gps_lat:19.113, gps_lng:72.869, severity:'critical', status:'pending', waste_type:'hazardous', address:'Andheri Station' },
+  { id:'5', gps_lat:19.030, gps_lng:72.930, severity:'low', status:'resolved', waste_type:'plastic', address:'Vashi Naka' },
+  { id:'6', gps_lat:19.072, gps_lng:72.882, severity:'high', status:'in_progress', waste_type:'mixed', address:'Kurla Depot' },
+];
+const MOCK_REPORTS = [
+  { id:'r1', address:'Dadar Station Road, Mumbai', waste_type:'plastic', waste_percentage:78, severity:'critical', status:'pending', created_at: new Date(Date.now()-3600000).toISOString(), citizen_name:'Rahul S.' },
+  { id:'r2', address:'Bandra Reclamation, Mumbai', waste_type:'mixed', waste_percentage:55, severity:'high', status:'in_progress', created_at: new Date(Date.now()-7200000).toISOString(), citizen_name:'Priya M.' },
+  { id:'r3', address:'Dharavi Cross Road', waste_type:'organic', waste_percentage:38, severity:'medium', status:'acknowledged', created_at: new Date(Date.now()-14400000).toISOString(), citizen_name:'Amit K.' },
+  { id:'r4', address:'Andheri Station Area', waste_type:'hazardous', waste_percentage:85, severity:'critical', status:'pending', created_at: new Date(Date.now()-900000).toISOString(), citizen_name:'Sneha R.' },
+  { id:'r5', address:'Colaba Causeway', waste_type:'plastic', waste_percentage:18, severity:'low', status:'resolved', created_at: new Date(Date.now()-86400000).toISOString(), citizen_name:'Raj P.' },
+];
+const MOCK_USER = { id:'u1', name:'Rahul Sharma', city:'Mumbai', role:'citizen', points:150, total_reports:12, resolved_reports:8 };
+const MOCK_NOTIFS = [
+  { id:'n1', title:'Report Submitted ✅', body:'Your waste report at Dadar Station Road has been received.', type:'info', is_read:false, created_at:new Date(Date.now()-1800000).toISOString() },
+  { id:'n2', title:'🔧 Cleanup In Progress', body:'Field team assigned to your report at Bandra Reclamation.', type:'info', is_read:false, created_at:new Date(Date.now()-7200000).toISOString() },
+  { id:'n3', title:'🎉 Area Cleaned!', body:'Your report at Colaba has been resolved. Thank you!', type:'success', is_read:true, created_at:new Date(Date.now()-86400000).toISOString() },
+];
+const MOCK_ANALYTICS = {
+  total: 47, avg_resolution_hours: 14,
+  by_severity: [{severity:'critical',count:'8'},{severity:'high',count:'14'},{severity:'medium',count:'17'},{severity:'low',count:'8'}],
+  by_status: [{status:'pending',count:'12'},{status:'in_progress',count:'8'},{status:'acknowledged',count:'5'},{status:'resolved',count:'22'}],
+  by_waste_type: [{waste_type:'plastic',count:'18'},{waste_type:'mixed',count:'14'},{waste_type:'organic',count:'10'},{waste_type:'hazardous',count:'5'}],
+  trend_30d: Array.from({length:7},(_,i)=>({ date: new Date(Date.now()-i*86400000).toISOString().split('T')[0], count: Math.floor(Math.random()*8)+2 })).reverse()
+};
+const MOCK_LEADERBOARD = [
+  {name:'Rahul Sharma',city:'Mumbai',points:150,total_reports:12},{name:'Priya Mehta',city:'Mumbai',points:120,total_reports:10},{name:'Amit Kumar',city:'Mumbai',points:90,total_reports:7},{name:'Sneha Rao',city:'Mumbai',points:70,total_reports:5},{name:'Raj Patil',city:'Mumbai',points:50,total_reports:4}
+];
+let GPS_ADDR = 'Dadar Station Road, Mumbai';
+
+// ═══════════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════════
+function selectRole(role) {
+  SELECTED_ROLE = role;
+  document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('role-' + role).classList.add('selected');
+  document.getElementById('login-btn').innerHTML = `<span>${role === 'authority' ? 'Enter Authority Portal' : 'Enter as Citizen'}</span><span>→</span>`;
+}
+
+async function demoLogin() {
+  const btn = document.getElementById('login-btn');
+  btn.innerHTML = '<div class="loading-spinner"></div>';
+  btn.disabled = true;
+  try {
+    const data = await api('POST', '/auth/demo-login', { role: SELECTED_ROLE });
+    TOKEN = data.token;
+    CURRENT_USER = data.user;
+    localStorage.setItem('cleanai_token', TOKEN);
+    localStorage.setItem('cleanai_user', JSON.stringify(CURRENT_USER));
+    // Seed demo data
+    await api('POST', '/seed-demo', {});
+    launchApp();
+  } catch(e) {
+    showToast('Error: ' + e.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function launchApp() {
+  document.getElementById('landing').style.display = 'none';
+  if (CURRENT_USER?.role === 'authority') {
+    document.getElementById('auth-app').style.display = 'flex';
+    initAuthorityApp();
+  } else {
+    document.getElementById('app').style.display = 'flex';
+    initCitizenApp();
+  }
+}
+
+function logout() {
+  TOKEN = null; CURRENT_USER = null;
+  localStorage.removeItem('cleanai_token');
+  localStorage.removeItem('cleanai_user');
+  location.reload();
+}
+
+// ═══════════════════════════════════════════════════
+// CITIZEN APP
+// ═══════════════════════════════════════════════════
+async function initCitizenApp() {
+  if (CURRENT_USER) {
+    document.getElementById('user-city-chip').textContent = '📍 ' + (CURRENT_USER.city || 'Mumbai');
+    document.getElementById('profile-name').textContent = CURRENT_USER.name;
+    document.getElementById('profile-avatar').textContent = CURRENT_USER.name[0].toUpperCase();
+    document.getElementById('profile-city').textContent = '📍 ' + (CURRENT_USER.city || 'Mumbai');
+    const h = new Date().getHours();
+    const greet = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+    document.getElementById('home-greeting').textContent = greet + ', ' + CURRENT_USER.name.split(' ')[0] + '! Help keep your city clean';
+  }
+  loadHomeData();
+  loadNotifications();
+  loadAwareness();
+  detectLocation();
+}
+
+async function loadHomeData() {
+  try {
+    const [pinsData, reportsData] = await Promise.all([
+      api('GET', '/reports/map/pins'),
+      api('GET', '/reports?limit=5')
+    ]);
+
+    ALL_REPORTS = reportsData.reports || MOCK_REPORTS;
+    renderMapPins(pinsData.pins || MOCK_PINS, 'main-map');
+
+    // Stats
+    const pins = pinsData.pins || MOCK_PINS;
+    document.getElementById('stat-total').textContent = reportsData.total || pins.length;
+    document.getElementById('stat-critical').textContent = pins.filter(p=>p.severity==='critical').length;
+    document.getElementById('stat-resolved').textContent = pins.filter(p=>p.status==='resolved').length;
+    document.getElementById('stat-pending').textContent = pins.filter(p=>p.status==='pending').length;
+
+    renderReportList(ALL_REPORTS.slice(0,4), 'home-reports-list', true);
+  } catch(e) { console.error(e); }
+}
+
+function renderMapPins(pins, containerId) {
+  const container = document.getElementById(containerId);
+  container.querySelectorAll('.map-pin').forEach(p => p.remove());
+  pins.forEach((pin, i) => {
+    const el = document.createElement('div');
+    el.className = `map-pin pin-${pin.severity === 'in_progress' ? 'medium' : pin.status === 'resolved' ? 'resolved' : pin.severity}`;
+    const positions = [[20,35],[75,25],[45,60],[80,55],[30,70],[60,40],[15,55],[85,35]];
+    const pos = positions[i % positions.length];
+    el.style.cssText = `left:${pos[0]}%;top:${pos[1]}%;`;
+    el.innerHTML = `<div class="pin-dot"><span>${pin.waste_type==='organic'?'🥬':pin.waste_type==='plastic'?'🧴':pin.waste_type==='hazardous'?'⚠️':'🗑️'}</span></div>`;
+    el.onclick = (e) => { e.stopPropagation(); showPinPopup(pin, e); };
+    container.appendChild(el);
+  });
+  container.onclick = () => { document.getElementById('map-popup')?.classList.remove('show'); };
+}
+
+function showPinPopup(pin, evt) {
+  const popup = document.getElementById('map-popup');
+  if (!popup) return;
+  document.getElementById('popup-content').innerHTML = `
+    <div style="font-weight:700;font-size:.85rem;color:var(--navy);margin-bottom:4px;">${pin.address || 'Unknown location'}</div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;">
+      <span class="badge badge-${pin.severity}">${pin.severity}</span>
+      <span class="badge badge-${pin.waste_type||'mixed'}">${pin.waste_type||'mixed'}</span>
+    </div>
+    <div style="font-size:.75rem;color:var(--text-muted);">Status: ${pin.status}</div>
+  `;
+  popup.classList.add('show');
+}
+
+function renderReportList(reports, containerId, compact = false) {
+  const container = document.getElementById(containerId);
+  if (!reports || reports.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>No reports yet. Be the first to report waste in your area!</p></div>`;
+    return;
+  }
+  container.innerHTML = reports.map(r => `
+    <div class="report-card" onclick="showReportDetail('${r.id}')">
+      <div class="report-card-header">
+        <div>
+          <div class="report-card-title">${r.address || 'Unknown location'}</div>
+          <div class="report-card-addr">📅 ${timeAgo(r.created_at)}${r.citizen_name ? ' · ' + r.citizen_name : ''}</div>
+        </div>
+        <span class="badge badge-${r.status||'pending'}">${(r.status||'pending').replace('_',' ')}</span>
+      </div>
+      <div class="report-card-meta">
+        <span class="badge badge-${r.severity||'low'}">${r.severity||'low'}</span>
+        <span class="badge badge-${r.waste_type||'mixed'}">${r.waste_type||'mixed'}</span>
+        ${r.waste_percentage ? `<span class="chip">🤖 ${Math.round(r.waste_percentage)}% waste</span>` : ''}
+      </div>
+      ${r.waste_percentage ? `
+      <div class="waste-bar-wrap">
+        <div class="waste-bar-label"><span>Waste coverage</span><span>${Math.round(r.waste_percentage)}%</span></div>
+        <div class="waste-bar"><div class="waste-bar-fill" style="width:${r.waste_percentage}%;background:${r.severity==='critical'?'var(--red)':r.severity==='high'?'#f97316':r.severity==='medium'?'var(--amber)':'var(--blue)'};"></div></div>
+      </div>` : ''}
+    </div>
+  `).join('');
+}
+
+async function loadMyReports() {
+  const list = document.getElementById('my-reports-list');
+  list.innerHTML = `<div class="card skeleton" style="height:80px;"></div><div class="card skeleton" style="height:80px;margin-top:8px;"></div>`;
+  try {
+    const data = await api('GET', '/reports?my_reports=true&limit=20');
+    renderReportList(data.reports || MOCK_REPORTS, 'my-reports-list');
+  } catch(e) { renderReportList(MOCK_REPORTS, 'my-reports-list'); }
+}
+
+async function showReportDetail(id) {
+  const report = ALL_REPORTS.find(r => r.id === id) || MOCK_REPORTS.find(r => r.id === id) || {};
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-title">${report.address || 'Waste Report'}</div>
+    ${report.waste_percentage ? `
+    <div class="ai-result" style="margin:0 0 1rem;">
+      <div class="ai-result-title">🤖 AI Analysis</div>
+      <div class="ai-meter">
+        <div class="ai-meter-label"><span>Waste Coverage</span><span>${Math.round(report.waste_percentage)}%</span></div>
+        <div class="ai-meter-bar"><div class="ai-meter-fill" style="width:${report.waste_percentage}%;background:var(--red);"></div></div>
+      </div>
+      <div class="ai-grid">
+        <div class="ai-item"><div class="ai-item-label">Type</div><div class="ai-item-val">${report.waste_type||'—'}</div></div>
+        <div class="ai-item"><div class="ai-item-label">Severity</div><div class="ai-item-val">${report.severity||'—'}</div></div>
+      </div>
+    </div>` : ''}
+    <div style="margin-bottom:1rem;">
+      <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:.4rem;">Current Status</div>
+      <div class="steps">
+        ${['pending','acknowledged','in_progress','resolved'].map((s, i) => {
+          const statuses = ['pending','acknowledged','in_progress','resolved'];
+          const idx = statuses.indexOf(report.status||'pending');
+          const done = i < idx; const active = i === idx;
+          return `<div class="step ${done?'done':''} ${active?'active':''}">
+            <div class="step-dot">${done?'✓':i+1}</div>
+            <div class="step-info"><div class="step-name">${s.replace('_',' ')}</div></div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+    <div style="font-size:.8rem;color:var(--text-muted);">Submitted ${timeAgo(report.created_at)}</div>
+    <button class="btn btn-outline" style="margin-top:1rem;" onclick="closeModal()">Close</button>
+  `;
+  document.getElementById('report-modal').classList.add('show');
+}
+
+function closeModal() { document.getElementById('report-modal').classList.remove('show'); }
+
+// Report submission
+async function submitReport() {
+  const addr = document.getElementById('location-input').value;
+  const desc = document.getElementById('desc-input').value;
+  if (!addr) return showToast('Please detect your location first');
+  if (SELECTED_FILES.length === 0) return showToast('Please upload at least one photo');
+
+  const btn = document.getElementById('submit-btn');
+  btn.innerHTML = '<div class="loading-spinner"></div> Analyzing with AI...';
+  btn.disabled = true;
+
+  try {
+    // Simulate AI analysis (replace with real API call)
+    await new Promise(r => setTimeout(r, 1500));
+    AI_RESULT = simulateAI();
+    showAIResult(AI_RESULT);
+
+    await new Promise(r => setTimeout(r, 800));
+    btn.innerHTML = '<div class="loading-spinner"></div> Submitting...';
+
+    const formData = new FormData();
+    SELECTED_FILES.forEach(f => formData.append('media', f));
+    formData.append('gps_lat', GPS_COORDS.lat);
+    formData.append('gps_lng', GPS_COORDS.lng);
+    formData.append('address', addr);
+    formData.append('description', desc);
+
+    const data = await api('POST', '/reports', formData, true);
+    showToast('🎉 Report submitted! +10 points earned');
+
+    // Reset form
+    SELECTED_FILES = [];
+    document.getElementById('upload-preview').innerHTML = '';
+    document.getElementById('desc-input').value = '';
+    document.getElementById('ai-result-block').style.display = 'none';
+
+    setTimeout(() => {
+      showScreen('my-reports');
+      loadMyReports();
+      loadHomeData();
+    }, 1500);
+  } catch(e) {
+    showToast('Error: ' + e.message);
+  } finally {
+    btn.innerHTML = '<span>Submit Report</span><span>🚀</span>';
+    btn.disabled = false;
+  }
+}
+
+function showAIResult(ai) {
+  document.getElementById('ai-result-block').style.display = 'block';
+  const colors = { critical:'var(--red)', high:'#f97316', medium:'var(--amber)', low:'var(--green)' };
+  setTimeout(() => {
+    document.getElementById('ai-pct-fill').style.width = ai.waste_percentage + '%';
+    document.getElementById('ai-pct-fill').style.background = colors[ai.severity] || 'var(--green)';
+    document.getElementById('ai-pct-text').textContent = ai.waste_percentage + '%';
+    document.getElementById('ai-type').textContent = ai.waste_type;
+    document.getElementById('ai-severity').textContent = ai.severity.toUpperCase();
+    document.getElementById('ai-conf').textContent = ai.confidence_score + '%';
+    document.getElementById('ai-action').textContent = ai.severity === 'critical' ? 'URGENT' : ai.severity === 'high' ? 'Priority' : 'Normal';
+  }, 100);
+}
+
+function handleFileSelect(e) {
+  SELECTED_FILES = Array.from(e.target.files);
+  renderPreviews();
+  // Trigger AI analysis simulation
+  if (SELECTED_FILES.length > 0) {
+    document.getElementById('ai-result-block').style.display = 'none';
+    setTimeout(() => { showAIResult(simulateAI()); }, 1200);
+  }
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('upload-zone').classList.remove('drag');
+  SELECTED_FILES = Array.from(e.dataTransfer.files);
+  renderPreviews();
+  if (SELECTED_FILES.length > 0) setTimeout(() => showAIResult(simulateAI()), 1200);
+}
+
+function openCamera(e) {
+  e.stopPropagation();
+  const inp = document.getElementById('file-input');
+  inp.setAttribute('capture', 'environment');
+  inp.click();
+}
+
+function renderPreviews() {
+  const container = document.getElementById('upload-preview');
+  container.innerHTML = SELECTED_FILES.map(f => {
+    const url = URL.createObjectURL(f);
+    return `<img src="${url}" class="preview-img" alt="preview">`;
+  }).join('');
+}
+
+async function detectLocation() {
+  const input = document.getElementById('location-input');
+  input.placeholder = 'Detecting...';
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        GPS_COORDS = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        GPS_ADDR = `GPS: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
+        input.value = GPS_ADDR;
+        showToast('📍 Location detected!');
+      },
+      () => {
+        GPS_ADDR = 'Dadar Station Road, Mumbai';
+        input.value = GPS_ADDR;
+        showToast('📍 Using default location');
+      }
+    );
+  } else {
+    GPS_ADDR = 'Dadar Station Road, Mumbai';
+    input.value = GPS_ADDR;
+  }
+}
+
+async function loadNotifications() {
+  try {
+    const data = await api('GET', '/notifications');
+    const notifs = data.notifications || MOCK_NOTIFS;
+    const unread = data.unread_count || notifs.filter(n => !n.is_read).length;
+
+    const badge = document.getElementById('notif-count');
+    if (unread > 0) { badge.style.display = 'flex'; badge.textContent = unread; }
+
+    const colors = { info:'var(--blue)', success:'var(--green)', warning:'var(--amber)', critical:'var(--red)', broadcast:'#7c3aed' };
+    document.getElementById('notif-list').innerHTML = notifs.length === 0
+      ? `<div class="empty-state"><div class="empty-icon">🔕</div><p>No notifications yet</p></div>`
+      : notifs.map(n => `
+        <div class="notif-item ${n.is_read?'':'unread'}" onclick="markRead('${n.id}',this)">
+          <div class="notif-dot" style="background:${colors[n.type]||'var(--blue)'}"></div>
+          <div class="notif-body">
+            <div class="notif-title">${n.title}</div>
+            <div class="notif-text">${n.body}</div>
+            <div class="notif-time">${timeAgo(n.created_at)}</div>
+          </div>
+        </div>`).join('');
+  } catch(e) { console.error(e); }
+}
+
+async function markRead(id, el) {
+  await api('PATCH', `/notifications/${id}/read`, {});
+  el.classList.remove('unread');
+}
+
+async function markAllRead() {
+  await api('PATCH', '/notifications/read-all', {});
+  document.querySelectorAll('.notif-item.unread').forEach(e => e.classList.remove('unread'));
+  document.getElementById('notif-count').style.display = 'none';
+  showToast('All notifications marked as read');
+}
+
+function loadAwareness() {
+  const reels = [
+    { tag:'♻️ Recycling Tips', title:'How to segregate dry & wet waste at home', emoji:'🏠' },
+    { tag:'🌱 Success Story', title:'How Zone 5 eliminated open dumping in 30 days', emoji:'🎉' },
+    { tag:'📢 Awareness', title:'Why plastic waste is dangerous — 5 facts you must know', emoji:'⚠️' },
+    { tag:'🏆 Green Hero', title:'Meet Rahul — citizen who filed 50 reports this month', emoji:'🦸' },
+    { tag:'🧹 Tutorial', title:'Join the community cleanup drive this Sunday', emoji:'🤝' },
+  ];
+  document.getElementById('reels-feed').innerHTML = reels.map(r => `
+    <div class="reel-card" onclick="showToast('Playing reel...')">
+      <div class="reel-emoji">${r.emoji}</div>
+      <div class="reel-overlay"></div>
+      <div class="reel-content">
+        <div class="reel-tag">${r.tag}</div>
+        <div class="reel-title">${r.title}</div>
+      </div>
+      <div class="reel-actions">
+        <div class="reel-action"><span>❤️</span><span>${Math.floor(Math.random()*500)+50}</span></div>
+        <div class="reel-action"><span>💬</span><span>${Math.floor(Math.random()*50)+5}</span></div>
+        <div class="reel-action" onclick="event.stopPropagation();showToast('Shared!')"><span>🔗</span><span>Share</span></div>
+      </div>
+    </div>
+  `).join('');
+
+  const heroes = MOCK_LEADERBOARD.slice(0,3);
+  const medals = ['🥇','🥈','🥉'];
+  document.getElementById('hero-list').innerHTML = heroes.map((h,i) => `
+    <div class="hero-row">
+      <div class="hero-avatar">${h.name[0]}</div>
+      <div><div class="hero-name">${medals[i]} ${h.name}</div><div style="font-size:.7rem;opacity:.6;color:#fff;">${h.total_reports} reports</div></div>
+      <div class="hero-pts">⭐ ${h.points} pts</div>
+    </div>
+  `).join('');
+}
+
+async function loadProfile() {
+  try {
+    const data = await api('GET', '/users/profile');
+    const u = data.user || MOCK_USER;
+    document.getElementById('profile-name').textContent = u.name;
+    document.getElementById('profile-avatar').textContent = u.name[0].toUpperCase();
+    document.getElementById('profile-city').textContent = '📍 ' + (u.city || 'Mumbai');
+    document.getElementById('profile-points').textContent = u.points || 0;
+    document.getElementById('ps-total').textContent = u.total_reports || 0;
+    document.getElementById('ps-resolved').textContent = u.resolved_reports || 0;
+    document.getElementById('ps-points').textContent = u.points || 0;
+
+    const lb = await api('GET', '/users/leaderboard');
+    const leaders = lb.leaderboard || MOCK_LEADERBOARD;
+    const medals = ['🥇','🥈','🥉'];
+    document.getElementById('leaderboard-list').innerHTML = leaders.map((l,i) => `
+      <div style="display:flex;align-items:center;gap:.8rem;padding:.7rem 0;border-bottom:1px solid var(--gray-border);">
+        <div style="font-size:1.1rem;width:28px;text-align:center;">${medals[i]||'#'+(i+1)}</div>
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--green-light);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--green-dark);">${l.name[0]}</div>
+        <div style="flex:1;"><div style="font-weight:600;font-size:.9rem;">${l.name}</div><div style="font-size:.75rem;color:var(--text-muted);">${l.total_reports} reports</div></div>
+        <div style="font-weight:700;color:var(--green);">⭐ ${l.points}</div>
+      </div>
+    `).join('');
+  } catch(e) { console.error(e); }
+}
+
+// ─── SCREEN NAVIGATION ────────────────────────────
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('screen-' + name.replace('-','_').replace('-','_'))?.classList.add('active');
+  document.getElementById('nav-' + name)?.classList.add('active');
+  if (name === 'my-reports') loadMyReports();
+  if (name === 'profile') loadProfile();
+  if (name === 'notifications') loadNotifications();
+}
+
+// Need to handle the hyphen in 'my-reports' for screen id
+document.addEventListener('DOMContentLoaded', () => {
+  // Fix screen id refs
+});
+
+// ═══════════════════════════════════════════════════
+// AUTHORITY APP
+// ═══════════════════════════════════════════════════
+async function initAuthorityApp() {
+  document.getElementById('auth-user-name').textContent = CURRENT_USER?.name || 'Authority';
+  loadDashboard();
+}
+
+async function loadDashboard() {
+  try {
+    const data = await api('GET', '/reports/analytics/summary');
+    const a = data.total !== undefined ? data : MOCK_ANALYTICS;
+
+    document.getElementById('a-total').textContent = a.total || 47;
+    document.getElementById('a-critical').textContent = a.by_severity?.find(s=>s.severity==='critical')?.count || 8;
+    document.getElementById('a-resolved').textContent = a.by_status?.find(s=>s.status==='resolved')?.count || 22;
+    document.getElementById('a-avg').textContent = (a.avg_resolution_hours || 14) + 'h';
+
+    renderTrendChart(a.trend_30d || MOCK_ANALYTICS.trend_30d);
+
+    const reports = await api('GET', '/reports?severity=critical&limit=5');
+    renderAuthReportList(reports.reports || MOCK_REPORTS.filter(r=>r.severity==='critical'), 'auth-recent-list');
+
+    renderMapPins(MOCK_PINS, 'auth-map');
+    renderAuthReportList(MOCK_REPORTS, 'auth-map-list');
+    renderAuthReportList(MOCK_REPORTS, 'auth-reports-list');
+
+    renderAnalyticsCharts(a);
+  } catch(e) { console.error(e); }
+}
+
+function renderTrendChart(trend) {
+  const ctx = document.getElementById('trend-chart');
+  if (!ctx) return;
+  if (TREND_CHART) TREND_CHART.destroy();
+  TREND_CHART = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: trend.map(t => t.date.slice(5)),
+      datasets: [{ data: trend.map(t => parseInt(t.count)), borderColor: '#1D9E75', backgroundColor: 'rgba(29,158,117,.1)', fill: true, tension: 0.4, pointRadius: 3 }]
+    },
+    options: { plugins:{ legend:{display:false} }, scales:{ x:{ticks:{color:'rgba(255,255,255,.4)',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'}}, y:{ticks:{color:'rgba(255,255,255,.4)',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'}} } }
+  });
+}
+
+function renderAnalyticsCharts(data) {
+  renderPieChart('type-chart', data.by_waste_type||[], 'waste_type', ['#378ADD','#1D9E75','#BA7517','#E24B4A','#7c3aed']);
+  renderPieChart('status-chart', data.by_status||[], 'status', ['#E24B4A','#BA7517','#378ADD','#1D9E75']);
+  renderPieChart('severity-chart', data.by_severity||[], 'severity', ['#E24B4A','#f97316','#BA7517','#378ADD']);
+}
+
+function renderPieChart(id, dataArr, key, colors) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: dataArr.map(d => d[key]),
+      datasets: [{ data: dataArr.map(d => parseInt(d.count)), backgroundColor: colors, borderWidth: 0 }]
+    },
+    options: { plugins:{ legend:{ labels:{ color:'rgba(255,255,255,.6)', font:{size:11} } } }, cutout:'60%' }
+  });
+}
+
+function renderAuthReportList(reports, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = (reports||[]).map(r => `
+    <div class="auth-report-row" onclick="showAuthReportDetail('${r.id}')">
+      <div class="rr-top">
+        <div>
+          <div class="rr-title">${r.address || 'Unknown location'}</div>
+          <div class="rr-addr">📅 ${timeAgo(r.created_at)} · ${r.citizen_name||'Anonymous'}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
+          <span class="badge badge-${r.severity}">${r.severity}</span>
+          <span class="badge badge-${r.status}">${(r.status||'pending').replace('_',' ')}</span>
+        </div>
+      </div>
+      ${r.waste_percentage ? `<div class="waste-bar" style="margin-top:.3rem;"><div class="waste-bar-fill" style="width:${r.waste_percentage}%;background:${r.severity==='critical'?'var(--red)':'var(--amber)'};"></div></div>` : ''}
+    </div>
+  `).join('');
+}
+
+function showAuthReportDetail(id) {
+  const r = MOCK_REPORTS.find(x => x.id === id) || MOCK_REPORTS[0];
+  const modal = document.getElementById('report-modal');
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-title">Report Detail</div>
+    <div class="ai-result" style="margin:0 0 1rem;">
+      <div class="ai-result-title">🤖 AI Analysis</div>
+      <div class="ai-meter">
+        <div class="ai-meter-label"><span>Waste Coverage</span><span>${r.waste_percentage||50}%</span></div>
+        <div class="ai-meter-bar"><div class="ai-meter-fill" style="width:${r.waste_percentage||50}%;background:var(--red);"></div></div>
+      </div>
+      <div class="ai-grid">
+        <div class="ai-item"><div class="ai-item-label">Type</div><div class="ai-item-val">${r.waste_type||'mixed'}</div></div>
+        <div class="ai-item"><div class="ai-item-label">Severity</div><div class="ai-item-val">${r.severity||'medium'}</div></div>
+        <div class="ai-item"><div class="ai-item-label">Reporter</div><div class="ai-item-val">${r.citizen_name||'Citizen'}</div></div>
+        <div class="ai-item"><div class="ai-item-label">Time</div><div class="ai-item-val">${timeAgo(r.created_at)}</div></div>
+      </div>
+    </div>
+    <div style="font-weight:600;margin-bottom:.6rem;font-size:.9rem;">📍 ${r.address}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1rem;">
+      <button class="btn btn-primary btn-sm" onclick="updateReportStatus('${r.id}','acknowledged')">✅ Acknowledge</button>
+      <button class="btn btn-amber btn-sm" onclick="updateReportStatus('${r.id}','in_progress')">🔧 In Progress</button>
+      <button class="btn btn-outline btn-sm" onclick="updateReportStatus('${r.id}','resolved')" style="grid-column:span 2;">🎉 Mark Resolved</button>
+    </div>
+    <button class="btn btn-secondary btn-sm" onclick="closeModal()" style="background:var(--gray-light);color:var(--text);">Close</button>
+  `;
+  modal.classList.add('show');
+}
+
+async function updateReportStatus(id, status) {
+  try {
+    await api('PATCH', `/reports/${id}/status`, { status });
+    showToast(`Status updated to "${status}" — citizen notified`);
+    closeModal();
+    loadDashboard();
+  } catch(e) { showToast('Error: ' + e.message); }
+}
+
+let AUTH_FILTER = 'all';
+function filterReports(filter, el) {
+  AUTH_FILTER = filter;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  const filtered = filter === 'all' ? MOCK_REPORTS
+    : filter === 'critical' ? MOCK_REPORTS.filter(r=>r.severity==='critical')
+    : MOCK_REPORTS.filter(r=>r.status===filter);
+  renderAuthReportList(filtered, 'auth-reports-list');
+}
+
+async function sendBroadcast() {
+  const title = document.getElementById('bc-title').value.trim();
+  const body = document.getElementById('bc-body').value.trim();
+  if (!title || !body) return showToast('Title and message are required');
+  try {
+    const data = await api('POST', '/notifications/broadcast', { title, body, city: 'Mumbai' });
+    document.getElementById('bc-result').innerHTML = `
+      <div style="background:rgba(29,158,117,.15);border:1px solid rgba(29,158,117,.3);border-radius:12px;padding:1rem;margin-top:.8rem;color:var(--green);">
+        ✅ ${data.message || 'Broadcast sent to all citizens!'}
+      </div>`;
+    document.getElementById('bc-title').value = '';
+    document.getElementById('bc-body').value = '';
+  } catch(e) { showToast('Error: ' + e.message); }
+}
+
+function showAuthScreen(name) {
+  document.querySelectorAll('.auth-screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.auth-nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('auth-screen-' + name)?.classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════════════
+function timeAgo(dateStr) {
+  if (!dateStr) return 'Unknown';
+  const diff = (Date.now() - new Date(dateStr)) / 1000;
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  return Math.floor(diff/86400) + 'd ago';
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Close modal on overlay click
+document.getElementById('report-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// Fix screen ID for my-reports
+const myReportsScreen = document.getElementById('screen-my-reports');
+// Already correct
+
+// Auto-launch if token exists
+window.addEventListener('load', () => {
+  if (TOKEN && CURRENT_USER) launchApp();
+});
+</script>
+</body>
+</html>
